@@ -1,0 +1,27 @@
+# Virtual Environments
+venv/
+.venv/
+env/
+
+# Personal Local Drivers & Sandbox Files
+sandbox.py
+readme_screenshot.html
+
+# Python Cache and Build Artifacts
+__pycache__/
+*.pyc
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.ruff_cache/
+
+# Environment files
+.env
+*.env
+.env*
+
+# OS and Editor Files
+.DS_Store
+.idea/
+.vscode/

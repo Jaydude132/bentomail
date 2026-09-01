@@ -1,0 +1,351 @@
+{# BentoMail dashboard template #}
+
+{% macro resolve_color(color_val, theme) %}
+    {%- if color_val -%}
+        {%- set color_str = color_val | string | trim -%}
+        {%- if color_str == 'SUCCESS' -%}{{ theme.success_color }}
+        {%- elif color_str == 'OK' -%}{{ theme.ok_color }}
+        {%- elif color_str == 'INFO' -%}{{ theme.info_color }}
+        {%- elif color_str == 'WARNING' -%}{{ theme.warning_color }}
+        {%- elif color_str == 'MINOR' -%}{{ theme.minor_color }}
+        {%- elif color_str == 'ERROR' -%}{{ theme.error_color }}
+        {%- elif color_str == 'CRITICAL' -%}{{ theme.critical_color }}
+        {%- elif color_str == 'IMPORTANT' -%}{{ theme.important_color }}
+        {%- else -%}{{ color_str }}
+        {%- endif -%}
+    {%- endif -%}
+{% endmacro %}
+
+{% macro render_system_logo() %}
+    <!-- Reusable System LED indicators (Dynamic positions representing active setups) -->
+    <table cellpadding="0" cellspacing="0" border="0" style="font-size: 0px; line-height: 0px; width: 42px;">
+        <tr>
+            <td style="padding: 2px 0;">
+                <div style="width: 42px; height: 6px; background-color: #14B8A6; border-radius: 2px;">
+                    <div style="width: 4px; height: 4px; background-color: #FFFFFF; border-radius: 50%; float: left; margin-top: 1px; margin-left: 24px;"></div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td style="padding: 2px 0;">
+                <div style="width: 42px; height: 6px; background-color: #8B5CF6; border-radius: 2px;">
+                    <div style="width: 4px; height: 4px; background-color: #FFFFFF; border-radius: 50%; float: left; margin-top: 1px; margin-left: 6px;"></div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td style="padding: 2px 0;">
+                <div style="width: 42px; height: 6px; background-color: #F59E0B; border-radius: 2px;">
+                    <div style="width: 4px; height: 4px; background-color: #FFFFFF; border-radius: 50%; float: right; margin-top: 1px; margin-right: 4px;"></div>
+                </div>
+            </td>
+        </tr>
+    </table>
+{% endmacro %}
+
+{% macro render_card_row(cards, row_index, theme, is_nested=False) %}
+    {% set rotation_colors = [theme.accent_color, "#8B5CF6", "#F59E0B"] %}
+    <table align="center" cellpadding="0" cellspacing="0" border="0" width="100%" style="width: 100%; {% if not is_nested %}min-width: 850px;{% else %}min-width: 810px;{% endif %} max-width: 850px; border-collapse: separate; text-align: center;">
+        <tr>
+            {% for c in cards %}
+                <!-- Calculate width percentage dynamically based on Python's calculated width_pct property -->
+                {% if c.width_pct %}{% set card_width = c.width_pct %}
+                {% elif c.colspan == 4 %}{% set card_width = "100%" %}
+                {% elif c.colspan == 3 %}{% set card_width = "74.5%" %}
+                {% elif c.colspan == 2 %}{% set card_width = "49%" %}
+                {% else %}{% set card_width = "23.5%" %}
+                {% endif %}
+                
+                {% if c.invisible %}
+                    <!-- Transparent Placeholder Card to pad or center elements -->
+                    <td width="{{ card_width }}" valign="top" style="background-color: transparent; border: none; padding: 15px;">
+                        &nbsp;
+                    </td>
+                {% else %}
+                    {% set color_to_use = c.color %}
+                    {% if not color_to_use %}
+                        {% set color_index = (row_index * 4 + loop.index0) % 3 %}
+                        {% set color_to_use = rotation_colors[color_index] %}
+                    {% else %}
+                        {% set color_to_use = resolve_color(color_to_use, theme) %}
+                    {% endif %}
+                    <td width="{{ card_width }}" valign="top" style="background-color: {{ theme.header_bg }}; border: 1px solid {{ theme.border_color }}; border-top: 3px solid {{ color_to_use }}; border-radius: 6px; padding: 15px; text-align: center; vertical-align: top; font-family: sans-serif;">
+                        <div style="font-size: 11px; font-weight: bold; color: {{ theme.text_muted }}; text-transform: uppercase; margin-bottom: 8px; line-height: 14px; mso-line-height-rule: exactly;">{{ c.title }}</div>
+                        <div style="font-size: 26px; font-weight: 900; color: {{ color_to_use }}; font-family: sans-serif; line-height: 30px; mso-line-height-rule: exactly; margin-bottom: 4px;">{{ c.value }}</div>
+                        <div style="font-size: 10px; color: {{ theme.text_muted }}; line-height: 13px; mso-line-height-rule: exactly;">{{ c.label }}</div>
+                    </td>
+                {% endif %}
+                {% if not loop.last %}
+                    <td width="2%" style="font-size: 0px; line-height: 0px; border: none; background-color: transparent;">&nbsp;</td>
+                {% endif %}
+            {% endfor %}
+        </tr>
+    </table>
+{% endmacro %}
+
+{% macro render_report_contents(r, theme) %}
+    <h3 style="margin: 0 0 16px 0; font-size: 20px; color: {{ theme.text_color }}; font-weight: 500; font-family: -apple-system, BlinkMacSystemFont, sans-serif; letter-spacing: -0.5px; line-height: 24px; text-align: {{ r.title_align }};">{{ r.title }}</h3>
+    {% if not r.data %}
+        <p style="margin: 0; padding: 25px 0 15px 0; font-size: 14px; color: {{ theme.text_muted }}; font-style: italic; text-align: center; font-family: sans-serif; line-height: 20px; mso-line-height-rule: exactly;">No data to display.</p>
+    {% else %}
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse: collapse; border: none;">
+            <thead>
+                <tr style="height: 35px; background-color: {{ theme.bg_color }}; text-align: left;">
+                    {% for h in r.headers %}
+                        {# If the first row is highlighted, we style the TH bottom border to match #}
+                        {% set first_row_is_highlighted = r.highlight_row_index is not none and r.highlight_row_index == 0 %}
+                        <th align="left" style="text-align: left; padding: 10px 15px; font-size: 12px; color: {{ theme.text_muted }}; text-transform: uppercase; border-bottom: {% if first_row_is_highlighted %}2px solid {{ theme.accent_color }}{% else %}1px solid {{ theme.border_color }}{% endif %}; line-height: 16px; mso-line-height-rule: exactly;">{{ h }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row_data in r.data %}
+                    {% set is_highlighted = r.highlight_row_index is not none and loop.index0 == r.highlight_row_index %}
+                    {% set next_row_is_highlighted = r.highlight_row_index is not none and loop.index == r.highlight_row_index %}
+                    <tr>
+                        {% for val in row_data %}
+                            {% if is_highlighted %}
+                                <td style="padding: 15px 15px; font-size: 13px; font-weight: bold; color: {{ theme.text_color }}; line-height: 18px; mso-line-height-rule: exactly; background-color: {{ theme.bg_color }}; border-top: 2px solid {{ theme.accent_color }}; border-bottom: 2px solid {{ theme.accent_color }};">{{ val }}</td>
+                            {% elif next_row_is_highlighted %}
+                                {# Pre-style the bottom of the preceding row to guarantee a thick top border on forward #}
+                                <td style="padding: 12px 15px; font-size: 13px; color: {{ theme.text_color }}; line-height: 18px; mso-line-height-rule: exactly; border-bottom: 2px solid {{ theme.accent_color }};">{{ val }}</td>
+                            {% else %}
+                                <td style="padding: 12px 15px; font-size: 13px; color: {{ theme.text_color }}; line-height: 18px; mso-line-height-rule: exactly; border-bottom: 1px solid {{ theme.border_color }};">{{ val }}</td>
+                            {% endif %}
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% if r.tip %}
+            <div style="padding-top: 15px; font-size: 11px; color: {{ theme.text_muted }}; text-align: left; line-height: 15px; mso-line-height-rule: exactly;">
+                💡 <i>Tip: {{ r.tip }}</i>
+            </div>
+        {% endif %}
+    {% endif %}
+{% endmacro %}
+
+{% macro render_notice_contents(n, theme, accent_color) %}
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse: separate; border-spacing: 0; text-align: left; background-color: transparent; border: none;">
+        <tr>
+            <td style="font-family: sans-serif; font-size: 13px; font-weight: 800; color: {{ accent_color }}; padding-bottom: 8px; line-height: 16px; mso-line-height-rule: exactly; text-align: left; background-color: transparent;">
+                <span style="font-size: 16px; vertical-align: middle; line-height: 16px; mso-line-height-rule: exactly;">{{ n.emoji }}</span>
+                <span style="font-size: 16px; vertical-align: middle; line-height: 16px; mso-line-height-rule: exactly; padding: 0 4px; margin: 0;">&nbsp;</span>
+                <span style="letter-spacing: 0.5px; text-transform: uppercase; vertical-align: middle; line-height: 16px; mso-line-height-rule: exactly;">{{ n.header_text }}</span>
+            </td>
+        </tr>
+        <tr>
+            <td style="font-family: sans-serif; font-size: 14px; line-height: 20px; mso-line-height-rule: exactly; color: {{ theme.text_color }}; text-align: left; padding-top: 2px; background-color: transparent;">
+                {{ n.message }}
+            </td>
+        </tr>
+    </table>
+{% endmacro %}
+
+{# --- Surgical Addition: Reusable Chart Render Block --- #}
+{% macro render_chart_contents(chart, theme) %}
+    {% if chart.title %}
+        <h3 style="margin: 0 0 12px 0; font-size: 14px; color: {{ theme.text_color }}; font-weight: bold; font-family: -apple-system, BlinkMacSystemFont, sans-serif; letter-spacing: -0.2px; line-height: 18px; text-align: left; text-transform: uppercase;">{{ chart.title }}</h3>
+    {% endif %}
+    <!-- display: block and border: none defends against Word vertical space-gapping defects -->
+    <img src="cid:{{ chart.cid }}" alt="{{ chart.title or 'Telemetry Chart' }}" width="100%" style="display: block; max-width: 100%; height: auto; border: none;" />
+{% endmacro %}
+
+{% macro render_component_row(components, theme, is_nested=False) %}
+    {% set num_items = components | length %}
+    <table align="center" cellpadding="0" cellspacing="0" border="0" width="100%" style="width: 100%; {% if not is_nested %}min-width: 850px;{% else %}min-width: 810px;{% endif %} max-width: 850px; border-collapse: separate; border-spacing: 0;">
+        <tr>
+            {% for comp in components %}
+                {% set item_width = "100%" if comp.colspan == 2 else "49%" %}
+                
+                {% if comp.__class__.__name__ == 'LineBreak' %}
+                    <!-- Render a clean visual vertical spacer block -->
+                    <td width="{{ item_width }}" style="font-size: 1px; line-height: 20px; height: 20px; background-color: transparent; border: none;">
+                        &nbsp;
+                    </td>
+                {% elif comp.headers is defined %}
+                    <td width="{{ item_width }}" valign="top" style="vertical-align: top; background-color: {{ theme.header_bg }}; border: 1px solid {{ theme.border_color }}; border-radius: 8px; padding: 20px; text-align: left;">
+                        {{ render_report_contents(comp, theme) }}
+                    </td>
+                {# --- Intercept Chart elements inside layout rows --- #}
+                {% elif comp.cid is defined %}
+                    <td width="{{ item_width }}" valign="top" style="vertical-align: top; background-color: {{ theme.header_bg }}; border: 1px solid {{ theme.border_color }}; border-radius: 8px; padding: 15px 20px; text-align: left;">
+                        {{ render_chart_contents(comp, theme) }}
+                    </td>
+                {% else %}
+                    {% set accent_color = resolve_color(comp.color, theme) %}
+                    <td width="{{ item_width }}" valign="top" style="vertical-align: top; background-color: {{ theme.header_bg }}; border: 1px solid {{ theme.border_color }}; border-left: 4px solid {{ accent_color }}; border-radius: 8px; padding: 15px 20px; text-align: left;">
+                        {{ render_notice_contents(comp, theme, accent_color) }}
+                    </td>
+                {% endif %}
+                
+                {% if not loop.last %}
+                    <td width="2%" style="font-size: 0px; line-height: 0px; background-color: transparent; border: none;">&nbsp;</td>
+                {% endif %}
+            {% endfor %}
+            {% if num_items == 1 and components[0].colspan == 1 %}
+                <td width="51%" style="background-color: transparent; border: none;">&nbsp;</td>
+            {% endif %}
+        </tr>
+    </table>
+{% endmacro %}
+
+{% macro render_section(s, theme) %}
+    <!-- Section Table with rounded corners Separate border style -->
+    <table align="center" cellpadding="0" cellspacing="0" border="0" width="100%" style="width: 100%; min-width: 850px; max-width: 850px; background-color: {{ theme.section_bg }}; border: 1px solid {{ theme.border_color }}; border-radius: 8px; border-collapse: separate; border-spacing: 0;">
+        {% if s.title or s.subtitle %}
+            <tr>
+                <td style="padding: 24px 20px 0 20px;">
+                    <h3 style="margin: 0; font-size: 16px; color: {{ theme.accent_color }}; text-transform: uppercase; letter-spacing: 1px; text-align: {{ s.title_align }}; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 20px; mso-line-height-rule: exactly;">
+                        {% if s.title and s.subtitle %}
+                            <span style="font-weight: 700;">{{ s.title }}</span><span style="font-weight: 300; color: {{ theme.text_muted }};"> | {{ s.subtitle }}</span>
+                        {% elif s.title %}
+                            <span style="font-weight: 700;">{{ s.title }}</span>
+                        {% else %}
+                            <span style="font-weight: 300; color: {{ theme.text_muted }};">{{ s.subtitle }}</span>
+                        {% endif %}
+                    </h3>
+                </td>
+            </tr>
+        {% endif %}
+        <tr>
+            <td style="padding: 20px;">
+                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse: collapse;">
+                    {% for row in s.widgets %}
+                        <tr>
+                            <td>
+                                {% if row.type == 'cards' %}
+                                    {{ render_card_row(row['items'], loop.index, theme, is_nested=True) }}
+                                {% elif row.type == 'components' %}
+                                    {{ render_component_row(row['items'], theme, is_nested=True) }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% if not loop.last %}
+                            <tr><td height="15" style="font-size: 1px; line-height: 15px;">&nbsp;</td></tr>
+                        {% endif %}
+                    {% endfor %}
+                </table>
+            </td>
+        </tr>
+    </table>
+{% endmacro %}
+
+{% macro render_footer(ft, theme) %}
+    {% set links_list = [] %}
+    {% for l in ft.links %}
+        {% set _ = links_list.append('<a href="' ~ l.url ~ '" style="color: ' ~ theme.accent_color ~ '; text-decoration: none;">' ~ l.text ~ '</a>') %}
+    {% endfor %}
+    <table align="center" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 850px; text-align: center; border-collapse: collapse;">
+        <tr>
+            <td style="padding: 0; font-size: 11px; color: {{ theme.text_muted }}; line-height: 16px; mso-line-height-rule: exactly;">
+                {% if ft.line1 or ft.line2 %}
+                    <b>{{ ft.line1 }}</b><br />{{ ft.line2 }}
+                {% endif %}
+                {% if links_list %}
+                    <br /><span style="color: {{ theme.text_muted }};">{{ links_list | join(' | ') | safe }}</span>
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+{% endmacro %}
+
+<!DOCTYPE html>
+<html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ subject }}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #FFFFFF; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: {{ theme.text_color }};">
+    <table align="center" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: {{ theme.bg_color }}; padding: 0 10px; min-width: 100%; border-collapse: collapse;">
+        <tr>
+            <td align="center" style="vertical-align: top; padding: 30px 0;">
+                <!-- Locked parent container at exactly 850px (resolves New Outlook / Gmail shrink-wrap defects) -->
+                <table align="center" cellpadding="0" cellspacing="0" border="0" width="850" style="width: 850px; max-width: 850px; border-collapse: collapse;">
+                    {% if header or hero %}
+                        <tr>
+                            <!-- Explicitly declare width on parent row cell to enforce 850px bounds -->
+                            <td width="850" style="width: 850px; max-width: 850px;">
+                                {% set glow_color = resolve_color(header.color or theme.accent_color, theme) if header else theme.accent_color %}
+                                <!-- Combined Header-Hero Parent Table -->
+                                <table align="center" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 850px; background-color: {{ theme.header_bg }}; border: 1px solid {{ theme.border_color }}; border-top: 4px solid {{ glow_color }}; border-radius: 8px; border-collapse: separate; overflow: hidden;">
+                                    {% if header %}
+                                        <tr>
+                                            <td style="padding: 25px 25px {% if hero %}20px{% else %}25px{% endif %} 25px;">
+                                                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse: collapse;">
+                                                    <tr>
+                                                        <td style="text-align: left;">
+                                                            <span style="font-size: 11px; font-weight: 800; letter-spacing: 1.5px; color: {{ glow_color }}; text-transform: uppercase; display: block; margin-bottom: 4px;">{{ header.description }}</span>
+                                                            <h1 style="margin: 0; font-size: 24px; font-weight: 800; color: {{ theme.text_color }}; letter-spacing: -0.5px; font-family: -apple-system, BlinkMacSystemFont, sans-serif;">
+                                                                {{ header.title | safe }} <span style="font-weight: 300; color: {{ theme.text_muted }};">| {{ header.subtitle }}</span>
+                                                            </h1>
+                                                        </td>
+                                                        <td width="60" align="right" style="vertical-align: middle;">
+                                                            {{ render_system_logo() }}
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                    {% endif %}
+                                    
+                                    {% if hero %}
+                                        {% set hero_bg_from = resolve_color(hero.from_color or theme.hero_from_color, theme) %}
+                                        {% set hero_bg_to = resolve_color(hero.to_color or theme.hero_to_color, theme) %}
+                                        {% set hero_badge_color = resolve_color(hero.accent_color or theme.hero_accent_color, theme) %}
+                                        <tr>
+                                            <td style="padding: {% if header %}0{% else %}25px{% endif %} 25px 25px 25px;">
+                                                <!-- Double-defended background system:bgcolor attribute secures solid render on Word, linear-gradient renders on modern web -->
+                                                <table bgcolor="{{ hero_bg_from }}" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse: separate; border-radius: 6px; overflow: hidden; border: 1px solid {{ theme.border_color }}; background-color: {{ hero_bg_from }};">
+                                                    <tr>
+                                                        <td bgcolor="{{ hero_bg_from }}" style="background: linear-gradient(135deg, {{ hero_bg_from }} 0%, {{ hero_bg_to }} 100%); background-color: {{ hero_bg_from }}; padding: 20px; text-align: left; font-family: sans-serif; mso-line-height-rule: exactly;">
+                                                            <span style="font-size: 12px; font-weight: bold; color: {{ hero_badge_color }}; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 5px; line-height: 15px; mso-line-height-rule: exactly;">{{ hero.badge }}</span>
+                                                            <h2 style="margin: 0 0 10px 0; font-size: 20px; color: {{ theme.hero_text_color }}; font-weight: 700; line-height: 26px; mso-line-height-rule: exactly;">{{ hero.title | safe}}</h2>
+                                                            <!-- Fixed paragraph block spacing & carriage return leaks using clean styled div blocks on a flat line -->
+                                                            <span style="display: block; margin: 0; font-size: 14px; line-height: 20px; mso-line-height-rule: exactly; color: {{ theme.hero_text_color }};">{{ hero.description | safe}}</span>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                    {% endif %}
+                                </table>
+                            </td>
+                        </tr>
+                        <tr><td height="15" style="font-size: 1px; line-height: 15px;">&nbsp;</td></tr>
+                    {% endif %}
+                    
+                    {% for row in components %}
+                        <tr>
+                            <!-- Explicitly declare width on parent row cell to enforce 850px bounds -->
+                            <td width="850" style="width: 850px; max-width: 850px;">
+                                {% if row.type == 'cards' %}
+                                    {{ render_card_row(row['items'], loop.index, theme) }}
+                                {% elif row.type == 'components' %}
+                                    {{ render_component_row(row['items'], theme) }}
+                                {% elif row.type == 'section' %}
+                                    {{ render_section(row, theme) }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% if not loop.last %}
+                            <tr><td height="15" style="font-size: 1px; line-height: 15px;">&nbsp;</td></tr>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if footer %}
+                        <tr><td height="15" style="font-size: 1px; line-height: 15px;">&nbsp;</td></tr>
+                        <tr>
+                            <!-- Explicitly declare width on parent row cell to enforce 850px bounds -->
+                            <td width="850" style="width: 850px; max-width: 850px;">
+                                {{ render_footer(footer, theme) }}
+                            </td>
+                        </tr>
+                    {% endif %}
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
