@@ -1,144 +1,209 @@
 # BentoMail
 
-> **A Python framework for building professional dashboard-style HTML reports and emails.**
+> **Build dashboard-style HTML emails in Python, without writing a line of HTML.**
 
-Build beautiful, responsive dashboard-style emails with reusable Python components in minutes.
+Metric grids, themed charts, data tables, and status notices — assembled from
+plain dataclasses and rendered into email that survives Outlook.
 
 <div align="center">
-  <!-- TODO: Drop your best, most visually striking screenshot of the generated dashboard here -->
-  <img src="docs/hero_screenshot.png" alt="BentoMail Hero Image" width="800"/>
+  <img src="https://raw.githubusercontent.com/jaydude132/bentomail/main/screenshots/png/theme_slate.png" alt="A BentoMail dashboard email in the Slate theme" width="700"/>
 </div>
 
 ---
 
 ## Why BentoMail?
 
-* 📊 **Dashboard-style reports:** Ditch plain text for metric grids, themed charts, and grouped sections.
-* 🎨 **Built-in themes:** Ships with polished Dark, Light, Gruvbox, Monokai, and Neutral layouts.
-* 🧩 **Component-based API:** Build layouts declaratively using native Python dataclasses.
-* 📱 **Outlook-defended layouts:** Fixed-width rendering boundaries completely mitigate classic Microsoft Word/Outlook shrink-wrapping bugs.
-* 📈 **Zero-disk charts:** Generates Matplotlib graphs instantly in memory as inline MIME assets.
-* ⚡ **Flexible output:** Generate raw HTML strings, extract packed `MIMEMultipart` objects, or dispatch directly over SMTP.
+* 📊 **Dashboard layouts, not plain text.** Metric card grids, inline charts, tables, and grouped sections.
+* 🧩 **Components, not markup.** Build the layout declaratively; the engine resolves the grid.
+* 📐 **Outlook-defended.** A fixed 850px parent table and integer `colspan` boundaries sidestep the classic Word-engine shrink-wrap bugs.
+* 🎨 **Five built-in themes,** each a frozen dataclass you can clone and override.
+* 📈 **Charts with no temp files.** Matplotlib figures are rendered in memory and attached as inline CID images.
+* ✉️ **Always multipart.** Every message carries a plain-text alternative alongside the HTML.
+* ⚡ **One dependency.** Jinja2. Charts are an optional extra.
 
 ---
 
 ## Installation
 
-Install the core, lightweight engine:
 ```bash
 pip install bentomail
 ```
 
-To enable zero-disk inline chart rendering (installs `matplotlib`):
-```bash
-pip install bentomail[charts]
-```
+Inline chart rendering is optional, since it pulls in matplotlib:
 
----
+```bash
+pip install "bentomail[charts]"
+```
 
 ---
 
 ## Quick Start
 
-You can generate a fully styled, multi-column layout in under a dozen lines of code.
-
 ```python
-from bentomail import BentoMailer, themes, colors
+from bentomail import BentoMailer, themes
 
-# 1. Initialize the engine with a built-in theme
 mail = BentoMailer(
+    recipients=["team@example.com"],
     subject="Daily Infrastructure Report",
-    theme=themes.GRUVBOX
+    theme=themes.GRUVBOX,
 )
 
-# 2. Build the layout components
 mail.create_header(title="Infrastructure Summary", subtitle="Production Cluster")
 
-mail.add_card(title="System CPU", value="34%", color=colors.SUCCESS)
-mail.add_card(title="Active Nodes", value="14", color=colors.INFO)
-mail.add_card(title="Faults", value="0", color=colors.WARNING)
+# Severity names resolve against the active theme's palette.
+mail.add_card(title="System CPU", value="34%", color="SUCCESS")
+mail.add_card(title="Active Nodes", value="14", color="INFO")
+mail.add_card(title="Faults", value="0", color="WARNING")
 
-# 3. Output raw HTML, get the MIME object, or send directly
-html_output = mail.compile_dashboard_html()
-# msg = mail.as_mime_message()
-# mail.send_dashboard()
+mail.send_dashboard()
 ```
+
+Four unassigned cards fill a row and wrap automatically. Pass `colspan` when you
+want explicit proportions.
+
+---
+
+## Two ways to use it
+
+`Dashboard` builds and renders. `BentoMailer` extends it with addressing and SMTP.
+If you deliver through SES, SendGrid, or the Graph API, you only need the former —
+it never touches SMTP config or your environment.
+
+```python
+from bentomail import Dashboard, themes
+
+dash = Dashboard(theme=themes.SLATE, subject="Weekly Report")
+dash.add_card(title="Uptime", value="99.98%", color="SUCCESS")
+
+html = dash.to_html()   # markup for your own transport
+text = dash.to_text()   # the plain-text alternative
+msg  = dash.to_mime()   # MIME body with inline images, no routing headers
+```
+
+```python
+from bentomail import BentoMailer
+
+mail = BentoMailer(recipients=["team@example.com"], subject="Weekly Report")
+mail.add_card(title="Uptime", value="99.98%", color="SUCCESS")
+
+msg = mail.as_mime_message()   # fully addressed
+mail.send_dashboard()          # or dispatch it
+```
+
+Relay settings come from constructor arguments first, then the environment
+(`SMTP_SERVER`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SENDER_EMAIL`), which
+can live in a `.env` file. TLS and SSL are inferred from ports 587 and 465
+unless you set `use_tls` or `use_ssl` yourself.
 
 ---
 
 ## Themes
 
-BentoMail ships with five highly refined elevation themes designed for system operations and data analytics. 
+| Theme | Preview |
+| :--- | :--- |
+| **Slate** — vibrant dark blue operations panel | <img src="https://raw.githubusercontent.com/jaydude132/bentomail/main/screenshots/png/theme_slate_compact.png" width="320"/> |
+| **Neutral** — pure dark gray, minimal accent | <img src="https://raw.githubusercontent.com/jaydude132/bentomail/main/screenshots/png/theme_neutral_compact.png" width="320"/> |
+| **Light** — clean corporate reporting layout | <img src="https://raw.githubusercontent.com/jaydude132/bentomail/main/screenshots/png/theme_light_compact.png" width="320"/> |
+| **Gruvbox** — warm retro, high-contrast terminal | <img src="https://raw.githubusercontent.com/jaydude132/bentomail/main/screenshots/png/theme_gruvbox_compact.png" width="320"/> |
+| **Monokai** — retro code-editor palette | <img src="https://raw.githubusercontent.com/jaydude132/bentomail/main/screenshots/png/theme_monokai_compact.png" width="320"/> |
 
-| Theme | Preview | Vibe |
-| :--- | :--- | :--- |
-| **Neutral** | `<img src="docs/neutral.png" width="200"/>` | Sleek, pure dark-gray, minimal-blue |
-| **Gruvbox** | `<img src="docs/gruvbox.png" width="200"/>` | Warm retro, high-contrast terminal |
-| **Monokai** | `<img src="docs/monokai.png" width="200"/>` | Retro terminal code editor style |
-| **Slate**   | `<img src="docs/slate.png" width="200"/>` | Vibrant dark blue operations panel |
-| **Light**   | `<img src="docs/light.png" width="200"/>` | Clean, corporate reporting layout |
+Full-height dashboards:
+[Slate](https://raw.githubusercontent.com/jaydude132/bentomail/main/screenshots/png/theme_slate.png) ·
+[Neutral](https://raw.githubusercontent.com/jaydude132/bentomail/main/screenshots/png/theme_neutral.png) ·
+[Light](https://raw.githubusercontent.com/jaydude132/bentomail/main/screenshots/png/theme_light.png) ·
+[Gruvbox](https://raw.githubusercontent.com/jaydude132/bentomail/main/screenshots/png/theme_gruvbox.png) ·
+[Monokai](https://raw.githubusercontent.com/jaydude132/bentomail/main/screenshots/png/theme_monokai.png)
 
 ---
 
 ## Components
 
-Stop wrestling with HTML and inline CSS. BentoMail components handle their own layout proportions, responsive nesting, and semantic coloring automatically.
+| Component | Preview |
+| :--- | :--- |
+| **Metric cards** — auto-balancing KPI grid | <img src="https://raw.githubusercontent.com/jaydude132/bentomail/main/screenshots/png/component_cards.png" width="320"/> |
+| **Data reports** — tables with row highlighting | <img src="https://raw.githubusercontent.com/jaydude132/bentomail/main/screenshots/png/component_report.png" width="320"/> |
+| **Status notices** — six severities | <img src="https://raw.githubusercontent.com/jaydude132/bentomail/main/screenshots/png/component_notices.png" width="320"/> |
+| **Charts** — line, bar, and pie, theme-matched | <img src="https://raw.githubusercontent.com/jaydude132/bentomail/main/screenshots/png/component_charts.png" width="320"/> |
 
-| Component | Preview | Description |
-| :--- | :--- | :--- |
-| **Metric Card** | `<img src="docs/card.png" width="250"/>` | Auto-stretching, grid-aligned KPI indicators. |
-| **Data Report** | `<img src="docs/report.png" width="250"/>` | Multi-column tables with row-highlighting support. |
-| **Polymorphic Alert**| `<img src="docs/alert.png" width="250"/>` | Contextual notices (Critical, Error, Warning, Info, Success). |
-| **Line & Bar Charts**| `<img src="docs/chart.png" width="250"/>` | Theme-matching visualization injected directly into the MIME tree. |
+Sections group widgets inside a bordered panel and can nest:
 
----
+```python
+from bentomail import BentoMailer, Section
+from bentomail.components import WarningNotice
 
-## Philosophy
+mail = BentoMailer(recipients=["team@example.com"], subject="Capacity Review")
 
-BentoMail is designed to make the common case simple while remaining highly customizable. 
+capacity = Section(title="Capacity & Cost", subtitle="Rolling 30-day projection")
+capacity.add_card(title="Storage Used", value="72%", color="WARNING")
+capacity.add_bar_chart(categories=["api", "auth"], values=[120, 96], title="p99")
+capacity.add_notice(WarningNotice(message="Storage crosses 80% in three weeks."))
 
-New users can generate polished reports in minutes without knowing any HTML, while advanced users can customize themes, colors, and modular layouts to perfectly match their organization’s branding. Layout proportions use an intelligent integer-based `colspan` system, meaning your UI boundaries remain perfectly straight whether you are rendering 2 columns or 4.
+mail.add_section(capacity)
+```
 
 ---
 
 ## Customization
 
-Because themes are built on native frozen dataclasses, advanced users can easily override semantic palettes to match their corporate identity using Python's standard `dataclasses.replace`.
+Themes are frozen dataclasses, so cloning one is standard library work:
 
 ```python
 import dataclasses
 from bentomail import BentoMailer, themes
 
-# Clone a built-in theme and override specific hex values
-custom_theme = dataclasses.replace(
+house_style = dataclasses.replace(
     themes.NEUTRAL,
     bg_color="#000000",
     accent_color="#ff5733",
-    success_color="#00ff00"
+    success_color="#00ff00",
 )
 
-mail = BentoMailer(subject="Custom Alert", theme=custom_theme)
+mail = BentoMailer(subject="Custom Alert", theme=house_style)
+```
+
+---
+
+## Attribution
+
+Rendered dashboards carry a small "Built with BentoMail" line at the very
+bottom, below your own footer. To turn it off:
+
+```python
+from bentomail import BentoMailer
+
+mail = BentoMailer(
+    recipients=["team@example.com"],
+    subject="Weekly Report",
+    branding=False,
+)
 ```
 
 ---
 
 ## Examples
 
-Check the `/examples` directory for complete implementations:
-* `basic_alert.py` - Standard status update dispatch.
-* `sandbox.py` - Comprehensive layout showcasing every widget in the engine.
-* `offline_compilation.py` - Bypassing SMTP to use BentoMail purely as an HTML generation pipeline.
+The `examples/` directory holds runnable scripts:
+
+* `basic_alert.py` — a short status email. Prints by default; `--send` dispatches it.
+* `showcase.py` — every widget in one dashboard. `--theme` switches palette.
+* `offline_compilation.py` — using BentoMail purely as an HTML pipeline, no SMTP.
 
 ---
 
-## Architecture & API Reference
+## How it works
 
-### 🚀 Key Under-the-Hood Features
-1. **Zero-Overhead Dataclasses:** Bypasses heavy schema validation in favor of native Python `dataclasses`. This results in near-instant cold-start execution times—critical for script-runners and scheduled batch orchestrators.
-2. **Defended HTML Grids:** Replaces fluid CSS float math with a rigid 850px parent table and integer-based `colspan` boundaries. This guarantees 100% visual parity on volatile rendering engines like Microsoft Outlook.
-3. **Decoupled Jinja Templates:** All styling edits (paddings, custom borders, margin spacing) are safely confined within `dashboard.jinja`, eliminating Python runtime regressions.
+1. **Components are plain dataclasses.** No schema validation layer, so import
+   and construction stay fast — which matters for cron-driven report jobs.
+2. **The layout engine resolves a four-column grid.** Cards accumulate into rows,
+   wrap at the column limit, and under-filled rows are padded with transparent
+   spacers. Widths are computed as percentages from a single formula.
+3. **Rendering is confined to `dashboard.jinja`.** Styling changes live in the
+   template, not in Python.
+4. **Messages are `multipart/alternative`.** The plain-text part is generated
+   from the same component tree, with charts represented by their alt text.
 
-### Component API Models
-All components are exposed via `bentomail.components`. 
+---
 
-*(For advanced subclassing, refer to the source files. The standard interface is fully wrapped by the `BentoMailer` builder methods `add_card()`, `add_report()`, `add_line_chart()`, etc.)*
+## License
+
+MIT. See [LICENSE](LICENSE).
