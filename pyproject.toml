@@ -1,39 +1,55 @@
-# pyproject.toml
 [build-system]
-requires = ["setuptools>=61.0.0", "wheel"]
+requires = ["setuptools>=77.0.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "bentomail"
-version = "1.0.0"
+version = "0.1.0"
 authors = [
-    { name="Jason Marencic" }
+    { name = "Jason Marencic" }
 ]
 description = "An elegant, decoupled HTML email dashboard layout engine using dataclasses and Jinja2."
 readme = "README.md"
 requires-python = ">=3.9"
+license = "MIT"
+license-files = ["LICENSE"]
+keywords = ["email", "html-email", "dashboard", "reporting", "jinja2", "smtp"]
 classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
     "Operating System :: OS Independent",
-    "Topic :: Communications :: Email"
-]
-# Core dependencies only
-dependencies = [
-    "Jinja2>=3.1.6",
-    "python-dotenv>=1.2.2"
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Communications :: Email",
+    "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 
-# Optional dependencies for users who want chart rendering
+dependencies = [
+    "Jinja2>=3.1",
+    "python-dotenv>=1.0",
+]
+
+# Inline chart rendering is optional. Without it, every other component
+# still renders normally.
 [project.optional-dependencies]
-charts = ["matplotlib>=3.11.0"]
+charts = ["matplotlib>=3.5"]
 
 [project.urls]
-"Homepage" = "<gitlab or github url>" 
+Homepage = "https://github.com/jaydude132/bentomail"
+Repository = "https://github.com/jaydude132/bentomail"
+Issues = "https://github.com/jaydude132/bentomail/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["bentomail*"]  # Note: If you rename your source folder from 'emailer' to 'bentomail', update this!
+include = ["bentomail*"]
 
 [tool.setuptools.package-data]
-"bentoemail" = ["templates/*.jinja"] 
+bentomail = ["templates/*.jinja"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

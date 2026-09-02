@@ -531,6 +531,17 @@ class BentoMailer:
         flush_contents()
         return rows
 
+    def _has_charts(self, components: List) -> bool:
+        """Reports whether a component tree contains any raw chart data."""
+        from .components import BaseChart, Section
+
+        for comp in components:
+            if isinstance(comp, BaseChart):
+                return True
+            if isinstance(comp, Section) and self._has_charts(comp.widgets):
+                return True
+        return False
+
     # --- Idempotent Dynamic Chart Preprocessor ---
     def _render_and_register_charts(self) -> List:
         """
@@ -541,17 +552,19 @@ class BentoMailer:
         from email.mime.image import MIMEImage
         from .components import BaseChart, Chart, Section
 
-        # 1. Smarter check: Only catch missing matplotlib package installation
+        # Charting is an optional extra, so a dashboard built without any chart
+        # components must never reach for matplotlib.
+        if not self._has_charts(self._components):
+            return list(self._components)
+
         try:
-            import matplotlib
+            import matplotlib  # noqa: F401
         except ImportError as e:
             raise ImportError(
                 "Matplotlib is required for inline chart rendering. "
-                "Please run: pip install matplotlib"
+                "Install it with: pip install bentomail[charts]"
             ) from e
 
-        # 2. This import is now OUTSIDE the try/except block.
-        # If there is a typo or saving issue, Python will tell you the exact line!
         from .chart_renderer import render_chart_to_png
 
         def process_component_tree(comp_list):
