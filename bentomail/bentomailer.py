@@ -76,6 +76,7 @@ class BentoMailer:
         cc_recipient: Optional[Union[str, List[str]]] = None,
         sender: Optional[str] = None,
         theme: themes.EmailTheme = themes.NEUTRAL,
+        branding: bool = True,
     ) -> None:
         self.sender: str = sender or os.getenv("SENDER_EMAIL", "sender@example.com")
         self.smtp_server: str = os.getenv("SMTP_SERVER", "localhost")
@@ -99,6 +100,7 @@ class BentoMailer:
         )
 
         self.theme: themes.EmailTheme = theme
+        self.branding: bool = branding
         self.recipients: Optional[List[str]] = (
             [r for r in recipients] if recipients else None
         )
@@ -614,6 +616,7 @@ class BentoMailer:
             hero=self.hero_block,
             footer=self.footer_block,
             components=grouped_components,
+            branding=self.branding,
             subject=self.subject or "Dashboard Report",
         )
 

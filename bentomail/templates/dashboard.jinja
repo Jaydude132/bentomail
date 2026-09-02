@@ -250,6 +250,16 @@
     </table>
 {% endmacro %}
 
+{% macro render_branding(theme) %}
+    <table align="center" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 850px; text-align: center; border-collapse: collapse;">
+        <tr>
+            <td style="padding: 0; font-size: 10px; color: {{ theme.text_muted }}; line-height: 14px; mso-line-height-rule: exactly;">
+                Built with <a href="https://github.com/jaydude132/bentomail" style="color: {{ theme.text_muted }}; text-decoration: underline;">BentoMail</a>
+            </td>
+        </tr>
+    </table>
+{% endmacro %}
+
 <!DOCTYPE html>
 <html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
@@ -340,6 +350,15 @@
                             <!-- Explicitly declare width on parent row cell to enforce 850px bounds -->
                             <td width="850" style="width: 850px; max-width: 850px;">
                                 {{ render_footer(footer, theme) }}
+                            </td>
+                        </tr>
+                    {% endif %}
+
+                    {% if branding %}
+                        <tr><td height="12" style="font-size: 1px; line-height: 12px;">&nbsp;</td></tr>
+                        <tr>
+                            <td width="850" style="width: 850px; max-width: 850px;">
+                                {{ render_branding(theme) }}
                             </td>
                         </tr>
                     {% endif %}
