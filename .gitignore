@@ -8,6 +8,7 @@ sandbox.py
 make_screenshots.py
 screenshot_output/
 user_guide.md
+ENHANCEMENT_REQUESTS.md
 
 # Python Cache and Build Artifacts
 __pycache__/
