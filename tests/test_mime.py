@@ -72,8 +72,8 @@ def test_cc_never_leaks_into_the_to_header(mailer):
 # =========================================================================
 # --- BODY ASSEMBLY ---
 # =========================================================================
-def test_body_is_related_when_there_are_no_attachments(mailer):
-    assert mailer().as_mime_message().get_content_type() == "multipart/related"
+def test_body_offers_both_renderings_when_there_are_no_attachments(mailer):
+    assert mailer().as_mime_message().get_content_type() == "multipart/alternative"
 
 
 def test_body_is_mixed_once_a_file_is_attached(mailer, tmp_path):
@@ -111,7 +111,7 @@ def test_dashboard_to_mime_has_no_routing_headers():
     msg = dash.to_mime()
     assert msg["To"] is None
     assert msg["Subject"] is None
-    assert msg.get_content_type() == "multipart/related"
+    assert msg.get_content_type() == "multipart/alternative"
 
 
 # =========================================================================
@@ -125,3 +125,60 @@ def test_missing_recipients_are_rejected(mailer):
 def test_missing_subject_is_rejected(mailer):
     with pytest.raises(ValueError, match="subject"):
         mailer(subject=None).as_mime_message()
+
+
+# =========================================================================
+# --- PLAIN TEXT ALTERNATIVE ---
+# =========================================================================
+def test_message_carries_both_a_text_and_an_html_part(mailer):
+    em = mailer()
+    em.create_header(title="Service Health")
+    em.add_card(title="Uptime", value="99.98%")
+
+    types = [p.get_content_type() for p in em.as_mime_message().walk()]
+    assert "text/plain" in types
+    assert "text/html" in types
+
+
+def test_plain_part_precedes_the_html_part(mailer):
+    """
+    Clients display the last alternative they can render, so the HTML has to
+    come second or nobody would ever see it.
+    """
+    em = mailer()
+    em.add_card(title="Uptime", value="99.98%")
+
+    alternative = em.as_mime_message()
+    assert alternative.get_content_type() == "multipart/alternative"
+    assert [p.get_content_type() for p in alternative.get_payload()] == [
+        "text/plain",
+        "multipart/related",
+    ]
+
+
+def test_plain_part_contains_the_dashboard_content(mailer):
+    em = mailer()
+    em.create_header(title="Service Health Report")
+    em.add_card(title="Uptime", value="99.98%", label="SLO target 99.90%")
+    em.add_success("Cache rollout completed.")
+
+    plain = next(
+        p for p in em.as_mime_message().walk() if p.get_content_type() == "text/plain"
+    ).get_payload(decode=True).decode()
+
+    assert "Service Health Report" in plain
+    assert "99.98%" in plain
+    assert "Cache rollout completed." in plain
+    assert "<" not in plain
+
+
+def test_attachments_wrap_the_alternative_body(mailer, tmp_path):
+    payload = tmp_path / "report.csv"
+    payload.write_text("a,b\n")
+
+    em = mailer()
+    em.add_attachment(str(payload))
+    msg = em.as_mime_message()
+
+    assert msg.get_content_type() == "multipart/mixed"
+    assert msg.get_payload()[0].get_content_type() == "multipart/alternative"

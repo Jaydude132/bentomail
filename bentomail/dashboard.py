@@ -11,6 +11,7 @@ import jinja2
 
 from . import themes
 from .components import (
+    chart_alt_text,
     Header,
     Hero,
     Card,
@@ -31,25 +32,7 @@ from .components import (
     PieChart,
 )
 from .layout import group_components
-
-
-def _chart_alt_text(chart) -> str:
-    """
-    Describes a chart for screen readers and for clients that block images.
-
-    Uses the caller's own alt_text when they supplied one, otherwise builds a
-    description from the chart type and its title.
-    """
-    if chart.alt_text:
-        return chart.alt_text
-
-    kind = {
-        LineChart: "Line chart",
-        BarChart: "Bar chart",
-        PieChart: "Pie chart",
-    }.get(type(chart), "Chart")
-
-    return f"{kind}: {chart.title}" if chart.title else kind
+from .text_renderer import render_dashboard_text
 
 
 class Dashboard:
@@ -343,7 +326,7 @@ class Dashboard:
                             cid=cid,
                             title=comp.title,
                             colspan=comp.colspan,
-                            alt_text=_chart_alt_text(comp),
+                            alt_text=chart_alt_text(comp),
                         )
                     )
                 elif isinstance(comp, Section):
@@ -395,27 +378,45 @@ class Dashboard:
     # Retained so existing pipelines keep working after the rename to to_html.
     compile_dashboard_html = to_html
 
+    def to_text(self) -> str:
+        """
+        Renders the dashboard as plain text.
+
+        This is the fallback carried alongside the HTML for clients that will
+        not display markup. Charts are represented by their alt text, since
+        the images cannot be shown.
+        """
+        return render_dashboard_text(self)
+
     def to_mime(self) -> MIMEMultipart:
         """
-        Packs the dashboard into a MIME body: the HTML part, any inline chart
-        images, and any queued file attachments.
+        Packs the dashboard into a MIME body: a plain-text alternative, the
+        HTML part with its inline chart images, and any queued attachments.
 
         No routing headers are set. BentoMailer.as_mime_message() adds those.
         """
+        # Compile the HTML first; it is what registers the inline chart images.
         dashboard_html = self.to_html()
+        plain_text = self.to_text()
 
-        # 1. Core Unit
-        body_container = MIMEMultipart("related")
-        body_container.attach(MIMEText(dashboard_html, "html"))
+        # 1. HTML and the images it references.
+        related = MIMEMultipart("related")
+        related.attach(MIMEText(dashboard_html, "html"))
         for inline_img in self._inline_images:
-            body_container.attach(inline_img)
+            related.attach(inline_img)
 
-        # 2. Outer Wrapper
+        # 2. Offer both renderings. Order matters: clients display the last
+        #    part they can render, so the HTML has to come second.
+        alternative = MIMEMultipart("alternative")
+        alternative.attach(MIMEText(plain_text, "plain"))
+        alternative.attach(related)
+
+        # 3. Downloadable files wrap the whole body.
         if not self._attachments:
-            return body_container
+            return alternative
 
         msg = MIMEMultipart("mixed")
-        msg.attach(body_container)
+        msg.attach(alternative)
         for attachment in self._attachments:
             msg.attach(attachment)
         return msg

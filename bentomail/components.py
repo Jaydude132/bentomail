@@ -186,3 +186,23 @@ class Section:
     def add_pie_chart(self, labels: list, sizes: list, **kwargs) -> None:
         kwargs["colspan"] = 2
         self.widgets.append(PieChart(labels=labels, sizes=sizes, **kwargs))
+
+
+def chart_alt_text(chart: BaseChart) -> str:
+    """
+    Describes a chart for screen readers, for clients that block images, and
+    for the plain-text alternative part.
+
+    Uses the caller's own alt_text when they supplied one, otherwise builds a
+    description from the chart type and its title.
+    """
+    if chart.alt_text:
+        return chart.alt_text
+
+    kind = {
+        LineChart: "Line chart",
+        BarChart: "Bar chart",
+        PieChart: "Pie chart",
+    }.get(type(chart), "Chart")
+
+    return f"{kind}: {chart.title}" if chart.title else kind

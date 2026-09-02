@@ -60,7 +60,7 @@ def test_chart_free_dashboard_renders_without_matplotlib(without_matplotlib):
 def test_chart_free_dashboard_builds_mime_without_matplotlib(without_matplotlib):
     dash = Dashboard(subject="Ops")
     dash.add_card(title="Uptime", value="99.98%")
-    assert dash.to_mime().get_content_type() == "multipart/related"
+    assert dash.to_mime().get_content_type() == "multipart/alternative"
 
 
 def test_requesting_a_chart_without_matplotlib_explains_the_extra(without_matplotlib):
