@@ -8,7 +8,7 @@ version = "0.1.0"
 authors = [
     { name = "Jason Marencic" }
 ]
-description = "Build dashboard-style HTML report emails in Python: metric grids, inline charts, and tables that survive Outlook."
+description = "Build dashboard-style HTML report emails in Python: metric cards, inline charts, and tables that survive Outlook."
 readme = "README.md"
 requires-python = ">=3.9"
 license = "MIT"
