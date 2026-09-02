@@ -48,13 +48,8 @@
     <table align="center" cellpadding="0" cellspacing="0" border="0" width="100%" style="width: 100%; {% if not is_nested %}min-width: 850px;{% else %}min-width: 810px;{% endif %} max-width: 850px; border-collapse: separate; text-align: center;">
         <tr>
             {% for c in cards %}
-                <!-- Calculate width percentage dynamically based on Python's calculated width_pct property -->
-                {% if c.width_pct %}{% set card_width = c.width_pct %}
-                {% elif c.colspan == 4 %}{% set card_width = "100%" %}
-                {% elif c.colspan == 3 %}{% set card_width = "74.5%" %}
-                {% elif c.colspan == 2 %}{% set card_width = "49%" %}
-                {% else %}{% set card_width = "23.5%" %}
-                {% endif %}
+                {# Widths are resolved by the layout engine before rendering. #}
+                {% set card_width = c.width_pct %}
                 
                 {% if c.invisible %}
                     <!-- Transparent Placeholder Card to pad or center elements -->
@@ -218,6 +213,8 @@
                                     {{ render_card_row(row['items'], loop.index, theme, is_nested=True) }}
                                 {% elif row.type == 'components' %}
                                     {{ render_component_row(row['items'], theme, is_nested=True) }}
+                                {% elif row.type == 'section' %}
+                                    {{ render_section(row, theme) }}
                                 {% endif %}
                             </td>
                         </tr>

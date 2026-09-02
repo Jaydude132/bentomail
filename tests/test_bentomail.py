@@ -1,4 +1,5 @@
 from bentomail import BentoMailer, Section, themes
+from bentomail.layout import group_components
 from bentomail.components import Card, FooterLink
 
 
@@ -42,7 +43,7 @@ def test_colspan_grouping_logic():
     em.add_critical("Notice 1", colspan=1)
     em.add_success("Notice 2", colspan=1)
     em.add_critical("Notice 3", colspan=2)
-    grouped = em._group_components_for_layout()
+    grouped = group_components(em._components)
     assert len(grouped) == 2
     assert len(grouped[0]["items"]) == 2
     assert len(grouped[1]["items"]) == 1
@@ -58,7 +59,7 @@ def test_dynamic_card_auto_padding():
     # Give it one card that explicitly only takes up half the row (colspan=2)
     em.add_card(title="Half Width Card", value="A", colspan=2)
 
-    grouped = em._group_components_for_layout()
+    grouped = group_components(em._components)
     row_items = grouped[0]["items"]
 
     # 1 real card + 1 auto-generated invisible spacer = 2 items total
