@@ -6,6 +6,9 @@ env/
 # Personal Local Drivers & Sandbox Files
 sandbox.py
 readme_screenshot.html
+make_screenshots.py
+screenshot_output/
+user_guide.md
 
 # Python Cache and Build Artifacts
 __pycache__/
