@@ -2,6 +2,7 @@
 # June 2, 2026
 
 import os
+from dataclasses import replace
 from typing import Optional, List, Union, overload
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
@@ -32,19 +33,45 @@ from .components import (
     PieChart,
 )
 
-# SMTP Environment bootstrap configuration
-try:
-    from dotenv import load_dotenv
+def _load_env_file(path: str = ".env") -> None:
+    """
+    Populates os.environ from a .env file, preferring python-dotenv when it is
+    installed and falling back to a minimal parser when it is not. Variables
+    already present in the environment are left alone.
+    """
+    try:
+        from dotenv import load_dotenv
 
-    load_dotenv()
-except ImportError:
-    if os.path.exists(".env"):
-        with open(".env", "r") as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith("#") and "=" in line:
-                    key, val = line.split("=", 1)
-                    os.environ[key.strip()] = val.strip().strip('"').strip("'")
+        load_dotenv(path)
+        return
+    except ImportError:
+        pass
+
+    if not os.path.exists(path):
+        return
+
+    with open(path, "r") as handle:
+        for line in handle:
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+
+
+def _env_flag(name: str) -> bool:
+    """Reads a boolean-style environment variable."""
+    return str(os.getenv(name, "")).strip().lower() in ("true", "1", "yes")
+
+
+def _resolve_port(explicit: Optional[int]) -> int:
+    """Resolves the relay port from an explicit value or the environment."""
+    if explicit is not None:
+        return int(explicit)
+    try:
+        return int(os.getenv("SMTP_PORT", "25"))
+    except (ValueError, TypeError):
+        return 25
 
 
 def _resolve_color(color_val: str, theme: Optional[themes.EmailTheme] = None) -> str:
@@ -77,26 +104,37 @@ class BentoMailer:
         sender: Optional[str] = None,
         theme: themes.EmailTheme = themes.NEUTRAL,
         branding: bool = True,
+        smtp_server: Optional[str] = None,
+        smtp_port: Optional[int] = None,
+        smtp_user: Optional[str] = None,
+        smtp_pass: Optional[str] = None,
+        use_tls: Optional[bool] = None,
+        use_ssl: Optional[bool] = None,
+        load_env: bool = True,
     ) -> None:
+        # Relay settings resolve from explicit arguments first, then the
+        # environment, then a local development default.
+        if load_env:
+            _load_env_file()
+
         self.sender: str = sender or os.getenv("SENDER_EMAIL", "sender@example.com")
-        self.smtp_server: str = os.getenv("SMTP_SERVER", "localhost")
-        try:
-            self.smtp_port: int = int(os.getenv("SMTP_PORT", "25"))
-        except (ValueError, TypeError):
-            self.smtp_port = 25
+        self.smtp_server: str = smtp_server or os.getenv("SMTP_SERVER", "localhost")
+        self.smtp_port: int = _resolve_port(smtp_port)
 
         # Authentication & Security
-        self.smtp_user: Optional[str] = os.getenv("SMTP_USER")
-        self.smtp_pass: Optional[str] = os.getenv("SMTP_PASS")
+        self.smtp_user: Optional[str] = smtp_user or os.getenv("SMTP_USER")
+        self.smtp_pass: Optional[str] = smtp_pass or os.getenv("SMTP_PASS")
 
-        # Auto-detect security protocols based on standard ports, or allow explicit overrides
+        # Encryption follows the standard submission ports unless set explicitly.
         self.use_tls: bool = (
-            str(os.getenv("SMTP_USE_TLS", "False")).lower() in ("true", "1", "yes")
-            or self.smtp_port == 587
+            use_tls
+            if use_tls is not None
+            else _env_flag("SMTP_USE_TLS") or self.smtp_port == 587
         )
         self.use_ssl: bool = (
-            str(os.getenv("SMTP_USE_SSL", "False")).lower() in ("true", "1", "yes")
-            or self.smtp_port == 465
+            use_ssl
+            if use_ssl is not None
+            else _env_flag("SMTP_USE_SSL") or self.smtp_port == 465
         )
 
         self.theme: themes.EmailTheme = theme
@@ -330,46 +368,49 @@ class BentoMailer:
         if not self.subject:
             raise ValueError("subject is not defined")
 
-    def _compute_card_widths(self, cards: list) -> None:
+    def _compute_card_widths(self, cards: list) -> list:
         """
-        Computes exact relative width percentages for a row of cards,
+        Resolves the relative width percentages for one row of cards,
         supporting both equal-width auto-spanning and explicit colspans.
+
+        Works on copies rather than the caller's components, so recompiling a
+        dashboard always starts from the colspans that were originally set.
         """
-        all_unassigned = all(c.colspan is None for c in cards)
-        num_cards = len(cards)
+        resolved = [replace(c) for c in cards]
+        all_unassigned = all(c.colspan is None for c in resolved)
+        num_cards = len(resolved)
 
         if all_unassigned:
             # 1. Equal-width distribution (100% - standard 2% gutters)
             total_spacers_pct = (num_cards - 1) * 2
             available_pct = 100 - total_spacers_pct
             equal_width = available_pct / num_cards
-            for c in cards:
+            for c in resolved:
                 c.width_pct = f"{equal_width}%"
-                c.colspan = 1  # Fallback for old templates
+                c.colspan = 1
         else:
             # 2. Mixed: some have explicit colspans, some do not.
-            explicit_sum = sum(c.colspan for c in cards if c.colspan is not None)
-            unassigned_count = sum(1 for c in cards if c.colspan is None)
+            explicit_sum = sum(c.colspan for c in resolved if c.colspan is not None)
+            unassigned_count = sum(1 for c in resolved if c.colspan is None)
 
             remaining_colspan = 4 - explicit_sum
             if unassigned_count > 0:
                 base_val = max(1, remaining_colspan // unassigned_count)
                 remainder = remaining_colspan % unassigned_count
-                for c in cards:
+                for c in resolved:
                     if c.colspan is None:
                         c.colspan = base_val + (1 if remainder > 0 else 0)
                         if remainder > 0:
                             remainder -= 1
 
             # 3. Dynamic Auto-Padding: If the row is under-filled, automatically append a transparent spacer
-            total_resolved_colspan = sum(c.colspan for c in cards)
+            total_resolved_colspan = sum(c.colspan for c in resolved)
             if total_resolved_colspan < 4:
                 missing_colspan = 4 - total_resolved_colspan
-                placeholder = Card(colspan=missing_colspan, invisible=True)
-                cards.append(placeholder)
+                resolved.append(Card(colspan=missing_colspan, invisible=True))
 
             # Translate resolved 1-4 colspans to standard percentage targets
-            for c in cards:
+            for c in resolved:
                 if c.colspan == 4:
                     c.width_pct = "100%"
                 elif c.colspan == 3:
@@ -378,6 +419,8 @@ class BentoMailer:
                     c.width_pct = "49%"
                 else:
                     c.width_pct = "23.5%"
+
+        return resolved
 
     # --- Sequential Layout Clustering Engine ---
     def _group_component_list(self, components: List) -> List[dict]:
@@ -413,7 +456,7 @@ class BentoMailer:
 
                 # Compute custom proportional card widths dynamically for each row
                 for r in card_rows:
-                    self._compute_card_widths(r["items"])
+                    r["items"] = self._compute_card_widths(r["items"])
                     rows.append(r)
                 card_block = []
 
@@ -485,7 +528,7 @@ class BentoMailer:
 
                 # Compute custom proportional card widths dynamically for each row
                 for r in card_rows:
-                    self._compute_card_widths(r["items"])
+                    r["items"] = self._compute_card_widths(r["items"])
                     rows.append(r)
                 card_block = []
 
@@ -658,23 +701,36 @@ class BentoMailer:
         msg["From"] = self.sender
         msg["To"] = ", ".join(recipient.strip() for recipient in self.recipients)
 
-        cc_list: list[str] = []
-        if self.cc_recipient is not None:
-            if isinstance(self.cc_recipient, str):
-                cc_list = [
-                    email.strip()
-                    for email in self.cc_recipient.split(",")
-                    if email.strip()
-                ]
-            if isinstance(self.cc_recipient, list):
-                cc_list = [email.strip() for email in self.cc_recipient]
-
+        cc_list = self.cc_list()
+        if cc_list:
             msg["Cc"] = ", ".join(cc_list)
-            for cc in cc_list:
-                if cc not in self.recipients:
-                    self.recipients.append(cc)
 
         return msg
+
+    def cc_list(self) -> List[str]:
+        """Normalizes the configured CC value into a list of addresses."""
+        if self.cc_recipient is None:
+            return []
+        if isinstance(self.cc_recipient, str):
+            return [
+                address.strip()
+                for address in self.cc_recipient.split(",")
+                if address.strip()
+            ]
+        return [address.strip() for address in self.cc_recipient if address.strip()]
+
+    def envelope_recipients(self) -> List[str]:
+        """
+        Every address the message is delivered to, CC included.
+
+        This is the SMTP envelope rather than the visible headers, so the
+        configured recipient list is never modified to carry CC addresses.
+        """
+        envelope = [recipient.strip() for recipient in self.recipients]
+        for cc in self.cc_list():
+            if cc not in envelope:
+                envelope.append(cc)
+        return envelope
 
     def send_dashboard(self) -> None:
         """Compiles the dashboard and dispatches it over the configured SMTP relay."""
@@ -695,12 +751,12 @@ class BentoMailer:
             if self.smtp_user and self.smtp_pass:
                 server.login(self.smtp_user, self.smtp_pass)
 
-            server.sendmail(self.sender, self.recipients, msg.as_string())
+            server.sendmail(self.sender, self.envelope_recipients(), msg.as_string())
 
         except Exception as e:
             raise RuntimeError(
-                f"Failed to send email via {self.smtp_server}:{self.smtp_port}. Error: {str(e)}"
-            )
+                f"Failed to send email via {self.smtp_server}:{self.smtp_port}. Error: {e}"
+            ) from e
         finally:
             # Ensure the connection is always closed cleanly
             try:

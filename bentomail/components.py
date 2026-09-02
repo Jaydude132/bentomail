@@ -67,7 +67,6 @@ class Footer:
 
 
 @dataclass
-@dataclass
 class Notice:
     message: str
     colspan: int = 2  # Default to full-width (2) for notices
