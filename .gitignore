@@ -6,7 +6,7 @@ env/
 # Personal Local Drivers & Sandbox Files
 sandbox.py
 make_screenshots.py
-screenshot_output/
+screenshots/
 user_guide.md
 ENHANCEMENT_REQUESTS.md
 
