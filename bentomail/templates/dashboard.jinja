@@ -143,7 +143,7 @@
         <h3 style="margin: 0 0 12px 0; font-size: 14px; color: {{ theme.text_color }}; font-weight: bold; font-family: -apple-system, BlinkMacSystemFont, sans-serif; letter-spacing: -0.2px; line-height: 18px; text-align: left; text-transform: uppercase;">{{ chart.title }}</h3>
     {% endif %}
     <!-- display: block and border: none defends against Word vertical space-gapping defects -->
-    <img src="cid:{{ chart.cid }}" alt="{{ chart.title or 'Telemetry Chart' }}" width="100%" style="display: block; max-width: 100%; height: auto; border: none;" />
+    <img src="cid:{{ chart.cid }}" alt="{{ chart.alt_text }}" width="100%" style="display: block; max-width: 100%; height: auto; border: none;" />
 {% endmacro %}
 
 {% macro render_component_row(components, theme, is_nested=False) %}

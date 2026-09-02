@@ -136,3 +136,13 @@ def test_builders_accept_prebuilt_dataclasses(mailer):
     assert em.footer_block.line1 == "direct"
     assert em._components[0].title == "direct"
     assert em._components[1].title == "direct"
+
+
+def test_report_has_no_header_color_field():
+    """
+    Removed: it was never rendered, and its hardcoded dark default would have
+    clashed with the Light theme had it ever been wired up.
+    """
+    assert not hasattr(Report(), "header_color")
+    with pytest.raises(TypeError):
+        Report(header_color="#000000")

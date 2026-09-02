@@ -33,6 +33,25 @@ from .components import (
 from .layout import group_components
 
 
+def _chart_alt_text(chart) -> str:
+    """
+    Describes a chart for screen readers and for clients that block images.
+
+    Uses the caller's own alt_text when they supplied one, otherwise builds a
+    description from the chart type and its title.
+    """
+    if chart.alt_text:
+        return chart.alt_text
+
+    kind = {
+        LineChart: "Line chart",
+        BarChart: "Bar chart",
+        PieChart: "Pie chart",
+    }.get(type(chart), "Chart")
+
+    return f"{kind}: {chart.title}" if chart.title else kind
+
+
 class Dashboard:
     """
     Assembles a themed HTML dashboard from a pipeline of components.
@@ -180,7 +199,6 @@ class Dashboard:
         headers: Optional[List[str]] = None,
         data: Optional[List[List[str]]] = None,
         highlight_row_index: Optional[int] = None,
-        header_color: str = "#1E293B",
         tip: str = "",
         colspan: int = 1,
         title_align: str = "left",
@@ -201,7 +219,6 @@ class Dashboard:
                     ),
                     data=kwargs.get("data") if kwargs.get("data") is not None else [],
                     highlight_row_index=kwargs.get("highlight_row_index"),
-                    header_color=kwargs.get("header_color", "#1E293B"),
                     tip=kwargs.get("tip", ""),
                     colspan=kwargs.get("colspan", 1),
                     title_align=kwargs.get("title_align", "left"),
@@ -322,7 +339,12 @@ class Dashboard:
 
                     # Swap for layout visual target
                     new_list.append(
-                        Chart(cid=cid, title=comp.title, colspan=comp.colspan)
+                        Chart(
+                            cid=cid,
+                            title=comp.title,
+                            colspan=comp.colspan,
+                            alt_text=_chart_alt_text(comp),
+                        )
                     )
                 elif isinstance(comp, Section):
                     copied_widgets = process_component_tree(comp.widgets)

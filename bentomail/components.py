@@ -53,7 +53,6 @@ class Report:
     headers: List[str] = field(default_factory=list)
     data: List[List[str]] = field(default_factory=list)
     highlight_row_index: Optional[int] = None
-    header_color: str = "#1E293B"
     tip: str = ""
     colspan: int = 1
     title_align: str = "left"
@@ -127,6 +126,7 @@ class BaseChart:
     x_label: str = ""
     y_label: str = ""
     color: Optional[str] = None
+    alt_text: str = ""  # Falls back to a description built from the chart type
 
 
 @dataclass

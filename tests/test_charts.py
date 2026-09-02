@@ -83,3 +83,47 @@ def test_raw_chart_components_survive_compilation():
     dash.add_line_chart(x=[1, 2], y=[3, 4], title="Trend")
     dash.to_html()
     assert isinstance(dash._components[0], LineChart)
+
+
+# =========================================================================
+# --- ALT TEXT ---
+# =========================================================================
+@pytest.mark.parametrize(
+    "add, kwargs, expected",
+    [
+        ("add_line_chart", {"x": [1], "y": [2], "title": "Daily Volume"},
+         "Line chart: Daily Volume"),
+        ("add_bar_chart", {"categories": ["a"], "values": [1], "title": "p99"},
+         "Bar chart: p99"),
+        ("add_pie_chart", {"labels": ["a"], "sizes": [1], "title": "Share"},
+         "Pie chart: Share"),
+    ],
+    ids=["line", "bar", "pie"],
+)
+def test_charts_get_descriptive_alt_text(add, kwargs, expected):
+    """
+    Chart images must be labelled: many clients block images by default, and
+    an unlabelled chart is invisible to screen readers.
+    """
+    dash = Dashboard()
+    getattr(dash, add)(**kwargs)
+    assert f'alt="{expected}"' in dash.to_html()
+
+
+def test_caller_supplied_alt_text_wins():
+    dash = Dashboard()
+    dash.add_line_chart(x=[1], y=[2], title="Volume", alt_text="Traffic rose all week")
+    assert 'alt="Traffic rose all week"' in dash.to_html()
+
+
+def test_untitled_chart_still_gets_alt_text():
+    dash = Dashboard()
+    dash.add_bar_chart(categories=["a"], values=[1])
+    assert 'alt="Bar chart"' in dash.to_html()
+
+
+def test_no_chart_image_is_left_unlabelled():
+    dash = Dashboard()
+    dash.add_line_chart(x=[1], y=[2], title="A")
+    dash.add_pie_chart(labels=["a"], sizes=[1], title="B")
+    assert 'alt=""' not in dash.to_html()
