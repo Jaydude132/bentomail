@@ -2,6 +2,7 @@
 # June 2, 2026
 
 import io
+
 import matplotlib
 
 matplotlib.use(
@@ -15,7 +16,7 @@ def render_chart_to_png(chart, theme) -> bytes:
     Renders a BaseChart subclass into clean binary PNG bytes,
     fully styled according to your active EmailTheme parameters.
     """
-    from .components import LineChart, BarChart, PieChart
+    from .components import BarChart, LineChart, PieChart
 
     # 1. Instantiate the figure using standard 850px dashboard width limits
     fig, ax = plt.subplots(figsize=(8, 2.7))
@@ -89,7 +90,7 @@ def render_chart_to_png(chart, theme) -> bytes:
             autopct="%1.1f%%",
             startangle=90,
             colors=colors,
-            textprops=dict(color=text_color, fontsize=9),
+            textprops={"color": text_color, "fontsize": 9},
         )
         for autotext in autotexts:
             autotext.set_color("#ffffff")  # High-contrast white percentage text

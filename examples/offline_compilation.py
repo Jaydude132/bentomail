@@ -28,7 +28,9 @@ def build_report() -> Dashboard:
     dash.add_card(title="Build", value="Passing", label="12m 04s", color="SUCCESS")
     dash.add_card(title="Tests", value="1,284", label="3 skipped", color="INFO")
     dash.add_card(title="Coverage", value="91.2%", label="+0.4%", color="SUCCESS")
-    dash.add_card(title="Warnings", value="7", label="all non-blocking", color="WARNING")
+    dash.add_card(
+        title="Warnings", value="7", label="all non-blocking", color="WARNING"
+    )
 
     dash.add_report(
         title="Slowest Suites",

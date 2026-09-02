@@ -121,9 +121,9 @@ def test_connection_is_always_closed(relay):
 
 def test_relay_failure_is_wrapped_but_keeps_its_cause(relay):
     em = relay()
-    with mock.patch("smtplib.SMTP", side_effect=OSError("connection refused")):
-        with pytest.raises(RuntimeError, match="relay.test") as excinfo:
-            em.send_dashboard()
+    failing = mock.patch("smtplib.SMTP", side_effect=OSError("connection refused"))
+    with failing, pytest.raises(RuntimeError, match="relay.test") as excinfo:
+        em.send_dashboard()
 
     assert isinstance(excinfo.value.__cause__, OSError)
     assert "connection refused" in str(excinfo.value)

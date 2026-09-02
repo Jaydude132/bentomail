@@ -50,13 +50,21 @@ def build_showcase(theme) -> Dashboard:
     )
 
     # --- Card grid: four unassigned cards resolve to equal widths ---
-    dash.add_card(title="Uptime", value="99.98%", label="SLO target 99.90%", color="SUCCESS")
+    dash.add_card(
+        title="Uptime", value="99.98%", label="SLO target 99.90%", color="SUCCESS"
+    )
     dash.add_card(title="Total Requests", value="48.2M", label="+12.4%", color="INFO")
-    dash.add_card(title="p50 Latency", value="84 ms", label="19 ms faster", color="SUCCESS")
-    dash.add_card(title="Error Rate", value="0.04%", label="Budget 0.10%", color="SUCCESS")
+    dash.add_card(
+        title="p50 Latency", value="84 ms", label="19 ms faster", color="SUCCESS"
+    )
+    dash.add_card(
+        title="Error Rate", value="0.04%", label="Budget 0.10%", color="SUCCESS"
+    )
 
     # --- Explicit colspans: a wide card beside a narrow one ---
-    dash.add_card(title="Monthly Availability", value="99.99%", label="Rolling 30 days", colspan=3)
+    dash.add_card(
+        title="Monthly Availability", value="99.99%", label="Rolling 30 days", colspan=3
+    )
     dash.add_card(title="Open Incidents", value="0", colspan=1, color="INFO")
 
     # --- Charts render inline as CID-attached images ---
@@ -88,33 +96,57 @@ def build_showcase(theme) -> Dashboard:
     )
 
     # --- Every notice severity ---
-    dash.add_notice(CriticalNotice(message="Primary database failover triggered in us-east-1."))
-    dash.add_notice(ErrorNotice(message="Nightly reconciliation job exited with code 1."))
+    dash.add_notice(
+        CriticalNotice(message="Primary database failover triggered in us-east-1.")
+    )
+    dash.add_notice(
+        ErrorNotice(message="Nightly reconciliation job exited with code 1.")
+    )
     dash.add_notice(WarningNotice(message="Object storage crosses 80% in three weeks."))
-    dash.add_notice(ImportantNotice(message="Certificate rotation scheduled for September 20."))
-    dash.add_notice(SuccessNotice(message="Cache rollout completed across all regions."))
+    dash.add_notice(
+        ImportantNotice(message="Certificate rotation scheduled for September 20.")
+    )
+    dash.add_notice(
+        SuccessNotice(message="Cache rollout completed across all regions.")
+    )
     dash.add_notice(InfoNotice(message="Read replicas added in eu-west-1 on Thursday."))
 
     # --- A section groups its own widgets inside a bordered panel ---
     capacity = Section(title="Capacity & Cost", subtitle="Rolling 30-day projection")
-    capacity.add_card(title="Compute Spend", value="$18.4K", label="Under forecast", color="SUCCESS")
-    capacity.add_card(title="Storage Used", value="72%", label="of 40 TB", color="WARNING")
-    capacity.add_card(title="Peak Headroom", value="2.8x", label="above peak", color="INFO")
+    capacity.add_card(
+        title="Compute Spend", value="$18.4K", label="Under forecast", color="SUCCESS"
+    )
+    capacity.add_card(
+        title="Storage Used", value="72%", label="of 40 TB", color="WARNING"
+    )
+    capacity.add_card(
+        title="Peak Headroom", value="2.8x", label="above peak", color="INFO"
+    )
     capacity.add_bar_chart(
-        categories=SERVICES, values=SERVICE_P99, title="p99 Latency by Service", y_label="ms"
+        categories=SERVICES,
+        values=SERVICE_P99,
+        title="p99 Latency by Service",
+        y_label="ms",
     )
     capacity.add_report(
         title="Growth Forecast",
         headers=["Resource", "Now", "In 30 days"],
-        data=[["Object storage", "28.8 TB", "33.1 TB"], ["Compute hours", "4,120", "4,610"]],
+        data=[
+            ["Object storage", "28.8 TB", "33.1 TB"],
+            ["Compute hours", "4,120", "4,610"],
+        ],
         tip="Forecasts assume the current seven-day growth rate holds.",
     )
-    capacity.add_notice(WarningNotice(message="Schedule a storage tier review before September 20."))
+    capacity.add_notice(
+        WarningNotice(message="Schedule a storage tier review before September 20.")
+    )
     dash.add_section(capacity)
 
     # --- Pie charts round out the chart types ---
     dash.add_pie_chart(
-        labels=SERVICES, sizes=[21.4, 9.8, 7.2, 5.1, 4.7], title="Request Share by Service"
+        labels=SERVICES,
+        sizes=[21.4, 9.8, 7.2, 5.1, 4.7],
+        title="Request Share by Service",
     )
 
     dash.create_footer(

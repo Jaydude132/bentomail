@@ -11,25 +11,25 @@ import jinja2
 
 from . import themes
 from .components import (
-    chart_alt_text,
-    Header,
-    Hero,
+    BarChart,
     Card,
-    LineBreak,
-    Report,
-    Notice,
-    Section,
-    Footer,
-    FooterLink,
     CriticalNotice,
     ErrorNotice,
-    WarningNotice,
+    Footer,
+    FooterLink,
+    Header,
+    Hero,
     ImportantNotice,
-    SuccessNotice,
     InfoNotice,
+    LineBreak,
     LineChart,
-    BarChart,
+    Notice,
     PieChart,
+    Report,
+    Section,
+    SuccessNotice,
+    WarningNotice,
+    chart_alt_text,
 )
 from .layout import group_components
 from .text_renderer import render_dashboard_text
@@ -136,11 +136,11 @@ class Dashboard:
         else:
             links_raw = kwargs.get("links", [])
             links_cleaned = []
-            for l in links_raw:
-                if isinstance(l, dict):
-                    links_cleaned.append(FooterLink(**l))
+            for link in links_raw:
+                if isinstance(link, dict):
+                    links_cleaned.append(FooterLink(**link))
                 else:
-                    links_cleaned.append(l)
+                    links_cleaned.append(link)
             self.footer_block = Footer(
                 line1=kwargs.get("line1", ""),
                 line2=kwargs.get("line2", ""),
@@ -285,6 +285,7 @@ class Dashboard:
         """
         import uuid
         from email.mime.image import MIMEImage
+
         from .components import BaseChart, Chart, Section
 
         # Charting is an optional extra, so a dashboard built without any chart
@@ -348,7 +349,8 @@ class Dashboard:
     # --- HTML RENDERING ENGINE (Jinja2) ---
     # =========================================================================
     def to_html(self) -> str:
-        # Clear previous compiled charts to prevent duplicate attachments on multiple compilations
+        # Drop the previous compile's chart images so repeated calls do not
+        # accumulate duplicate attachments.
         self._inline_images = [
             img
             for img in self._inline_images

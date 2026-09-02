@@ -1,5 +1,10 @@
 # BentoMail
 
+[![CI](https://github.com/jaydude132/bentomail/actions/workflows/ci.yml/badge.svg)](https://github.com/jaydude132/bentomail/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/bentomail.svg)](https://pypi.org/project/bentomail/)
+[![Python](https://img.shields.io/pypi/pyversions/bentomail.svg)](https://pypi.org/project/bentomail/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 > **Build dashboard-style HTML emails in Python, without writing a line of HTML.**
 
 Metric grids, themed charts, data tables, and status notices — assembled from
@@ -75,9 +80,9 @@ from bentomail import Dashboard, themes
 dash = Dashboard(theme=themes.SLATE, subject="Weekly Report")
 dash.add_card(title="Uptime", value="99.98%", color="SUCCESS")
 
-html = dash.to_html()   # markup for your own transport
-text = dash.to_text()   # the plain-text alternative
-msg  = dash.to_mime()   # MIME body with inline images, no routing headers
+html = dash.to_html()  # markup for your own transport
+text = dash.to_text()  # the plain-text alternative
+msg = dash.to_mime()  # MIME body with inline images, no routing headers
 ```
 
 ```python
@@ -86,8 +91,8 @@ from bentomail import BentoMailer
 mail = BentoMailer(recipients=["team@example.com"], subject="Weekly Report")
 mail.add_card(title="Uptime", value="99.98%", color="SUCCESS")
 
-msg = mail.as_mime_message()   # fully addressed
-mail.send_dashboard()          # or dispatch it
+msg = mail.as_mime_message()  # fully addressed
+mail.send_dashboard()  # or dispatch it
 ```
 
 Relay settings come from constructor arguments first, then the environment

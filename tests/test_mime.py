@@ -1,5 +1,6 @@
-import pytest
 from email.mime.multipart import MIMEMultipart
+
+import pytest
 
 from bentomail import Dashboard
 
@@ -95,7 +96,9 @@ def test_attachment_can_be_renamed(mailer, tmp_path):
 
     em = mailer()
     em.add_attachment(str(payload), custom_filename="Weekly Metrics.csv")
-    filenames = [p.get_filename() for p in em.as_mime_message().walk() if p.get_filename()]
+    filenames = [
+        p.get_filename() for p in em.as_mime_message().walk() if p.get_filename()
+    ]
     assert "Weekly Metrics.csv" in filenames
 
 
@@ -162,9 +165,15 @@ def test_plain_part_contains_the_dashboard_content(mailer):
     em.add_card(title="Uptime", value="99.98%", label="SLO target 99.90%")
     em.add_success("Cache rollout completed.")
 
-    plain = next(
-        p for p in em.as_mime_message().walk() if p.get_content_type() == "text/plain"
-    ).get_payload(decode=True).decode()
+    plain = (
+        next(
+            p
+            for p in em.as_mime_message().walk()
+            if p.get_content_type() == "text/plain"
+        )
+        .get_payload(decode=True)
+        .decode()
+    )
 
     assert "Service Health Report" in plain
     assert "99.98%" in plain

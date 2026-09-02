@@ -2,7 +2,7 @@
 # June 2, 2026
 
 from dataclasses import dataclass, field
-from typing import Optional, List, Union, ClassVar
+from typing import ClassVar, List, Optional, Union
 
 
 @dataclass

@@ -91,12 +91,21 @@ def test_raw_chart_components_survive_compilation():
 @pytest.mark.parametrize(
     "add, kwargs, expected",
     [
-        ("add_line_chart", {"x": [1], "y": [2], "title": "Daily Volume"},
-         "Line chart: Daily Volume"),
-        ("add_bar_chart", {"categories": ["a"], "values": [1], "title": "p99"},
-         "Bar chart: p99"),
-        ("add_pie_chart", {"labels": ["a"], "sizes": [1], "title": "Share"},
-         "Pie chart: Share"),
+        (
+            "add_line_chart",
+            {"x": [1], "y": [2], "title": "Daily Volume"},
+            "Line chart: Daily Volume",
+        ),
+        (
+            "add_bar_chart",
+            {"categories": ["a"], "values": [1], "title": "p99"},
+            "Bar chart: p99",
+        ),
+        (
+            "add_pie_chart",
+            {"labels": ["a"], "sizes": [1], "title": "Share"},
+            "Pie chart: Share",
+        ),
     ],
     ids=["line", "bar", "pie"],
 )

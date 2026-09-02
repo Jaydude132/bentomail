@@ -1,6 +1,7 @@
 # Author: Jason Marencic
 # June 2, 2026
 
+import contextlib
 import os
 import smtplib
 from email.mime.multipart import MIMEMultipart
@@ -100,9 +101,7 @@ class BentoMailer(Dashboard):
             else _env_flag("SMTP_USE_SSL") or self.smtp_port == 465
         )
 
-        self.recipients: Optional[List[str]] = (
-            [r for r in recipients] if recipients else None
-        )
+        self.recipients: Optional[List[str]] = list(recipients) if recipients else None
         self.cc_recipient: Optional[Union[str, List[str]]] = cc_recipient
 
     def _validate_routing_fields(self) -> None:
@@ -173,12 +172,9 @@ class BentoMailer(Dashboard):
             server.sendmail(self.sender, self.envelope_recipients(), msg.as_string())
 
         except Exception as e:
-            raise RuntimeError(
-                f"Failed to send email via {self.smtp_server}:{self.smtp_port}. Error: {e}"
-            ) from e
+            relay = f"{self.smtp_server}:{self.smtp_port}"
+            raise RuntimeError(f"Failed to send email via {relay}. Error: {e}") from e
         finally:
-            # Ensure the connection is always closed cleanly
-            try:
+            # Closing is best effort; the send result is what matters.
+            with contextlib.suppress(Exception):
                 server.quit()
-            except Exception:
-                pass

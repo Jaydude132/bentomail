@@ -64,9 +64,7 @@ def _columns(rows: List[List[str]], indent: str, gap: int = COLUMN_GAP) -> List[
 def _render_cards(cards: List[Card], indent: str) -> List[str]:
     """Renders a run of metric cards as an aligned label/value/note table."""
     rows = [
-        [c.title or "", c.value or "", c.label or ""]
-        for c in cards
-        if not c.invisible
+        [c.title or "", c.value or "", c.label or ""] for c in cards if not c.invisible
     ]
     return _columns(rows, indent)
 
@@ -110,7 +108,7 @@ def _render_notice(notice: Notice, indent: str) -> List[str]:
 
     # Fold the label onto the first wrapped line.
     first = body[0]
-    body[0] = indent + label + first[len(indent) + len(label):]
+    body[0] = indent + label + first[len(indent) + len(label) :]
     return body
 
 

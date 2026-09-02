@@ -32,7 +32,9 @@ def build_alert(recipient: str) -> BentoMailer:
         subtitle="Completed 03:14 UTC",
     )
 
-    mail.add_card(title="Volumes", value="18 / 18", label="All captured", color="SUCCESS")
+    mail.add_card(
+        title="Volumes", value="18 / 18", label="All captured", color="SUCCESS"
+    )
     mail.add_card(title="Transferred", value="1.4 TB", label="42 min", color="INFO")
     mail.add_card(title="Failures", value="0", label="None", color="SUCCESS")
 

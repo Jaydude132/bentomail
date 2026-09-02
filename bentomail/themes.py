@@ -2,7 +2,45 @@
 # June 2, 2026
 
 from dataclasses import dataclass
-from .colors import *
+
+from .colors import (
+    AMBER_500,
+    BLUE_500,
+    BLUE_600,
+    CYAN_400,
+    EMERALD_500,
+    FUCHSIA_500,
+    LIME_400,
+    NEUTRAL_50,
+    NEUTRAL_400,
+    NEUTRAL_700,
+    NEUTRAL_800,
+    NEUTRAL_900,
+    NEUTRAL_950,
+    ORANGE_400,
+    ORANGE_500,
+    PURPLE_400,
+    RED_500,
+    RED_600,
+    ROSE_500,
+    SLATE_50,
+    SLATE_100,
+    SLATE_200,
+    SLATE_400,
+    SLATE_500,
+    SLATE_800,
+    SLATE_900,
+    SLATE_950,
+    STONE_100,
+    STONE_700,
+    STONE_800,
+    STONE_900,
+    STONE_950,
+    TEAL_500,
+    VIOLET_400,
+    WHITE,
+    YELLOW_400,
+)
 
 
 @dataclass(frozen=True)
@@ -107,13 +145,13 @@ MONOKAI = EmailTheme(
     important_color=PURPLE_400,  # Retro Pastel Purple (#c084fc)
 )
 
-# GRUVBOX: Retro, high-contrast, ultra-warm terminal theme with corrected high-visibility border
+# GRUVBOX: Retro, high-contrast, ultra-warm terminal theme
 GRUVBOX = EmailTheme(
     name="Gruvbox",
     bg_color="#282828",  # Warm gruvbox dark background
     text_color="#ebdbb2",  # Retro light cream text
     text_muted="#a89984",  # Warm medium gray highlights
-    border_color="#504945",  # High-visibility border lines (resolves invisible row lines)
+    border_color="#504945",  # High-visibility border lines
     header_bg="#3c3836",  # Slightly elevated warm panel
     accent_color="#fe8019",  # Retro Gruvbox Orange Accent
     section_bg="#1d2021",  # Deep high-contrast panel background

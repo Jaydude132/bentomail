@@ -123,8 +123,8 @@ def test_footer_accepts_dictionaries_and_dataclasses(mailer):
             FooterLink(text="Repo", url="https://example.com/repo"),
         ],
     )
-    assert all(isinstance(l, FooterLink) for l in em.footer_block.links)
-    assert [l.text for l in em.footer_block.links] == ["Docs", "Repo"]
+    assert all(isinstance(link, FooterLink) for link in em.footer_block.links)
+    assert [link.text for link in em.footer_block.links] == ["Docs", "Repo"]
 
 
 def test_builders_accept_prebuilt_dataclasses(mailer):

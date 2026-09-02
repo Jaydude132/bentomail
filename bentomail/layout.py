@@ -96,7 +96,9 @@ def group_components(components: List) -> List[dict]:
         for comp in card_block:
             if isinstance(comp, LineBreak):
                 if row_cards:
-                    rows.append({"type": "cards", "items": resolve_card_widths(row_cards)})
+                    rows.append(
+                        {"type": "cards", "items": resolve_card_widths(row_cards)}
+                    )
                     row_cards, row_colspan = [], 0
                 continue
 

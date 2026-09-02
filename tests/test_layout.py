@@ -1,4 +1,4 @@
-from bentomail.components import Card, LineBreak, Notice, Report, Section
+from bentomail.components import Card, LineBreak, Report, Section
 from bentomail.layout import (
     GRID_COLUMNS,
     column_width,

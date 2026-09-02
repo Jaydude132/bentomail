@@ -31,7 +31,9 @@ def test_mailer_inherits_the_dashboard_defaults(mailer):
 
 
 def test_subject_becomes_the_document_title():
-    assert "<title>Weekly Report</title>" in Dashboard(subject="Weekly Report").to_html()
+    assert (
+        "<title>Weekly Report</title>" in Dashboard(subject="Weekly Report").to_html()
+    )
 
 
 def test_theme_colors_reach_the_markup():
