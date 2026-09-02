@@ -8,12 +8,23 @@ version = "0.1.0"
 authors = [
     { name = "Jason Marencic" }
 ]
-description = "An elegant, decoupled HTML email dashboard layout engine using dataclasses and Jinja2."
+description = "Build dashboard-style HTML report emails in Python: metric grids, inline charts, and tables that survive Outlook."
 readme = "README.md"
 requires-python = ">=3.9"
 license = "MIT"
 license-files = ["LICENSE"]
-keywords = ["email", "html-email", "dashboard", "reporting", "jinja2", "smtp"]
+keywords = [
+    "email",
+    "html-email",
+    "dashboard",
+    "reporting",
+    "report",
+    "smtp",
+    "mime",
+    "outlook",
+    "jinja2",
+    "charts",
+]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
