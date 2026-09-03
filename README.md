@@ -24,7 +24,7 @@ plain dataclasses and rendered into email that survives Outlook.
 * 🎨 **Five built-in themes,** each a frozen dataclass you can clone and override.
 * 📈 **Charts with no temp files.** Matplotlib figures are rendered in memory and attached as inline CID images.
 * ✉️ **Always multipart.** Every message carries a plain-text alternative alongside the HTML.
-* ⚡ **One dependency.** Jinja2. Charts are an optional extra.
+* ⚡ **Light footprint.** Jinja2 and python-dotenv. Charts are an optional extra.
 
 ---
 
@@ -199,9 +199,11 @@ The `examples/` directory holds runnable scripts:
 
 1. **Components are plain dataclasses.** No schema validation layer, so import
    and construction stay fast — which matters for cron-driven report jobs.
-2. **The layout engine resolves a four-column grid.** Cards accumulate into rows,
-   wrap at the column limit, and under-filled rows are padded with transparent
-   spacers. Widths are computed as percentages from a single formula.
+2. **The layout engine resolves a four-column grid.** Cards you leave unsized
+   spread evenly across their row, so three cards become three equal columns.
+   Cards given an explicit `colspan` keep the proportion you asked for, and a
+   row left partly filled is padded with a transparent spacer so the grid holds.
+   Rows wrap at four columns. Every width comes from a single formula.
 3. **Rendering is confined to `dashboard.jinja`.** Styling changes live in the
    template, not in Python.
 4. **Messages are `multipart/alternative`.** The plain-text part is generated
